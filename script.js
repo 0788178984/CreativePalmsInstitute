@@ -266,39 +266,95 @@ async function callGeminiAPI(prompt) {
     }
 }
 
-// Initialize EmailJS
+// =============== EmailJS Configuration ===============
+// To troubleshoot:
+// 1. Go to EmailJS dashboard: https://dashboard.emailjs.com/
+// 2. Check if these keys match your dashboard:
+
+// PUBLIC KEY (Get from: Account > API Keys)
+// If wrong: Login to EmailJS > Click your name > API Keys
 (function() {
-    emailjs.init("OUWdr0kTs6aX5J2PW"); // Your public key
+    emailjs.init("OUWdr0kTs6aX5J2PW");
+    console.log("EmailJS initialized with public key"); // Verify initialization
 })();
 
-// Add or update the sendNotification function
+// Update the sendNotification function with troubleshooting comments
 async function sendNotification(userMessage) {
+    console.log("Starting email notification..."); // Debug point 1
     try {
-        await emailjs.send(
-            "service_wgq1nd8",     // Your service ID
-            "template_rdijcqi",    // Your template ID
+        // SERVICE ID (Get from: Email Services > Your Service > Service ID)
+        // If wrong: Login to EmailJS > Email Services > Click your service
+        const SERVICE_ID = "service_wgq1nd8";
+        
+        // TEMPLATE ID (Get from: Email Templates > Your Template > Template ID)
+        // If wrong: Login to EmailJS > Email Templates > Click your template
+        const TEMPLATE_ID = "template_rdijcqi";
+        
+        // Verify keys before sending
+        console.log("Using Service ID:", SERVICE_ID); // Debug point 2
+        console.log("Using Template ID:", TEMPLATE_ID); // Debug point 3
+
+        const response = await emailjs.send(
+            SERVICE_ID,
+            TEMPLATE_ID,
             {
+                // These must match EXACTLY with your template variables
+                // To check: Go to EmailJS > Email Templates > Edit your template
                 to_name: "Admin",
-                from_name: "Chat Bot User",
+                from_name: "Website Visitor",
                 message: userMessage,
                 timestamp: new Date().toLocaleString()
             }
         );
+
+        // Success logs
+        console.log("Email sent successfully!", response);
+        console.log("If you didn't receive the email:");
+        console.log("1. Check spam folder");
+        console.log("2. Verify email address in EmailJS service settings");
+        console.log("3. Confirm template variables match exactly");
+
+        return response;
     } catch (error) {
-        console.log('Notification error:', error);
+        // Error logs for troubleshooting
+        console.error("==== EmailJS Error ====");
+        console.error("Error type:", error.name);
+        console.error("Error message:", error.message);
+        console.error("Check if:");
+        console.error("1. Public Key is correct");
+        console.error("2. Service ID is correct");
+        console.error("3. Template ID is correct");
+        console.error("4. Template variables match");
+        throw error;
     }
 }
 
-// Update your sendMessage function to include the notification
+// =============== Troubleshooting Steps ===============
+// If emails are not working:
+// 1. Open browser console (F12 or right-click > Inspect)
+// 2. Send a test message
+// 3. Look for console logs above
+// 4. Verify these match your EmailJS dashboard:
+//    - Public Key: OUWdr0kTs6aX5J2PW
+//    - Service ID: service_wgq1nd8
+//    - Template ID: template_rdijcqi
+// 5. Check your EmailJS dashboard:
+//    - Correct email address is set
+//    - Service is active
+//    - Template variables match the code
+
+// Update your sendMessage function with debug logs
 async function sendMessage() {
     const message = messageInput.value.trim();
     if (!message) return;
+
+    console.log("=== Starting New Message Process ===");
+    console.log("Message to send:", message);
 
     messageInput.value = '';
     messageInput.disabled = true;
     sendButton.disabled = true;
 
-    // Format timestamp
     const now = new Date();
     const timestamp = now.toLocaleTimeString('en-US', { 
         hour: '2-digit', 
@@ -310,14 +366,18 @@ async function sendMessage() {
     const typingIndicator = showTypingIndicator();
 
     try {
-        // Send email notification
+        // Attempt to send email notification
+        console.log("Attempting to send email notification...");
         await sendNotification(message);
+        console.log("Email notification sent successfully!");
 
-        // Rest of your existing code
+        // Rest of your code...
         const response = await callGeminiAPI(message);
         typingIndicator.remove();
         addMessage(response, false, timestamp);
     } catch (error) {
+        console.error("=== Error in Message Process ===");
+        console.error(error);
         typingIndicator.remove();
         addMessage(`Error: ${error.message}`, false, timestamp);
     } finally {
