@@ -266,6 +266,30 @@ async function callGeminiAPI(prompt) {
     }
 }
 
+// Initialize EmailJS
+(function() {
+    emailjs.init("OUWdr0kTs6aX5J2PW"); // Your public key
+})();
+
+// Add or update the sendNotification function
+async function sendNotification(userMessage) {
+    try {
+        await emailjs.send(
+            "service_wgq1nd8",     // Your service ID
+            "template_rdijcqi",    // Your template ID
+            {
+                to_name: "Admin",
+                from_name: "Chat Bot User",
+                message: userMessage,
+                timestamp: new Date().toLocaleString()
+            }
+        );
+    } catch (error) {
+        console.log('Notification error:', error);
+    }
+}
+
+// Update your sendMessage function to include the notification
 async function sendMessage() {
     const message = messageInput.value.trim();
     if (!message) return;
@@ -274,27 +298,23 @@ async function sendMessage() {
     messageInput.disabled = true;
     sendButton.disabled = true;
 
-    // Format timestamp to be more compact
+    // Format timestamp
     const now = new Date();
     const timestamp = now.toLocaleTimeString('en-US', { 
         hour: '2-digit', 
         minute: '2-digit',
         hour12: true 
-    }).replace(/\s/g, '').toLowerCase(); // Makes "12:30 PM" into "12:30pm"
+    }).replace(/\s/g, '').toLowerCase();
     
     addMessage(message, true, timestamp);
     const typingIndicator = showTypingIndicator();
 
     try {
-        // Add a small delay to show typing indicator (min 1 second)
-        const startTime = Date.now();
+        // Send email notification
+        await sendNotification(message);
+
+        // Rest of your existing code
         const response = await callGeminiAPI(message);
-        const elapsedTime = Date.now() - startTime;
-        
-        if (elapsedTime < 1000) {
-            await new Promise(resolve => setTimeout(resolve, 1000 - elapsedTime));
-        }
-        
         typingIndicator.remove();
         addMessage(response, false, timestamp);
     } catch (error) {
